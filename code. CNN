@@ -1,0 +1,75 @@
+import tensorflow as tf
+# Import relevant libraries
+import tensorflow as tf # Tensor Operations
+from tensorflow import keras # Neural networks
+from tensorflow.keras.preprocessing.image import ImageDataGenerator # Loading images
+
+# Load the data and preporcess it into acceptable format for CNN
+
+# Training set : Formatting
+train_datagen = ImageDataGenerator(rescale = 1./255, # sets units in range 0-1
+                                   shear_range = 0.2, # hyper parameters that affect quality.
+                                   zoom_range = 0.2,
+                                   horizontal_flip = True)
+# Training set : Loading
+training_set = train_datagen.flow_from_directory('dataset/training_set', # File path
+                                                 target_size = (64, 64), # dimantonality of the images, could be 28x28,64x64...
+                                                 batch_size = 32, # 
+                                                 class_mode = 'binary') # could be binary or categorical
+# Test set: Formatting and loading.
+test_datagen = ImageDataGenerator(rescale = 1./255)
+test_set = test_datagen.flow_from_directory('dataset/test_set',
+                                            target_size = (64, 64),
+                                            batch_size = 32,
+                                            class_mode = 'binary')
+                                            
+# Building the CNN.
+# It is going to consist of a convolutional layer(picture), 
+
+print(training_set.class_indices)
+print(test_set.class_indices)
+
+# Import CNN dependencies.
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Activation, Dropout, Flatten, Dense
+
+# Initialize the CNN model
+cnn = tf.keras.models.Sequential() # Initializing the cnn model
+
+# Stack the layers.
+
+# First Convoultion layer and First Pooling layer: 
+cnn.add(tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='relu', input_shape=[64, 64, 3])) #Input layer
+cnn.add(tf.keras.layers.MaxPool2D(pool_size=2, strides=2)) # Pooling layer
+cnn.add(Dropout( 0.4 )) # regularization
+              
+# (Hidden) Second Convolution layer and second Pooling layer:
+cnn.add(tf.keras.layers.Conv2D(filters=32, kernel_size=3, activation='relu')) # Hidden convolutional layer
+cnn.add(tf.keras.layers.MaxPool2D(pool_size=2, strides=2)) # Hidden Pooling layer
+cnn.add(Dropout( 0.4 )) # regularization
+
+cnn.add(tf.keras.layers.Flatten()) # Flatten 
+
+# Fully connected layer/Dense layer.
+cnn.add(tf.keras.layers.Dense(units=128, activation='relu')) #
+cnn.add(tf.keras.layers.Dense(units=1, activation='sigmoid')) # Output layer. 
+
+# Compile the CNN and train the model on the dataset.
+cnn.compile(optimizer = 'adam', loss = 'binary_crossentropy', metrics = ['accuracy'])
+
+# Train the model
+cnn.fit(x = training_set, validation_data = test_set, epochs = 25)
+
+# Making a prediction.
+import numpy as np
+from tensorflow.keras.preprocessing import image
+test_image = image.load_img('dataset/single_prediction/cat_or_dog_1.jpg', target_size = (64, 64))
+test_image = image.img_to_array(test_image)
+test_image = np.expand_dims(test_image, axis = 0)
+result = cnn.predict(test_image)
+training_set.class_indices
+if result[0][0] == 1:
+  prediction = 'dog'
+else:
+  prediction = 'cat'
